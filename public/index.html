@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>热点追踪</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🔥 热点追踪</h1>
+      <p class="subtitle">多源实时热点聚合</p>
+    </header>
+
+    <div class="toolbar">
+      <div class="source-filters" id="sourceFilters">
+        <button class="filter-btn active" data-source="all">全部</button>
+      </div>
+      <div class="actions">
+        <span id="status" class="status"></span>
+        <button id="analyzeBtn" class="analyze-btn">AI 分析</button>
+        <button id="refreshBtn" class="refresh-btn">手动刷新</button>
+      </div>
+    </div>
+
+    <div id="analysisPanel" class="analysis-panel" style="display:none;">
+      <div class="analysis-header">
+        <h2>🤖 AI 热点分析</h2>
+        <span id="analysisTime" class="analysis-time"></span>
+      </div>
+      <p id="analysisSummary" class="analysis-summary"></p>
+      <div id="analysisTopics" class="analysis-topics"></div>
+    </div>
+
+    <div id="trendsList" class="trends-list">
+      <div class="loading">加载中...</div>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+
+    <div id="fetchStatus" class="fetch-status"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

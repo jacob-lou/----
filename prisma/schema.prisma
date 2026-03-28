@@ -1,0 +1,42 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+model TrendItem {
+  id         Int      @id @default(autoincrement())
+  title      String
+  url        String?
+  source     String
+  score      Int      @default(0)
+  extra      String?
+  externalId String?
+  fetchedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([source])
+  @@index([fetchedAt])
+}
+
+model FetchLog {
+  id        Int      @id @default(autoincrement())
+  source    String
+  status    String
+  message   String?
+  count     Int      @default(0)
+  duration  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model TrendAnalysis {
+  id        Int      @id @default(autoincrement())
+  summary   String
+  topics    String
+  model     String
+  createdAt DateTime @default(now())
+}
