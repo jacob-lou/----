@@ -542,6 +542,7 @@ button { cursor: pointer; font-family: var(--font); }
 .source-tag.huggingface{ background: #FFF9C4; color: #F57F17; }
 .source-tag.v2ex       { background: #ECEFF1; color: #37474F; }
 .source-tag.bingnews   { background: #E3F2FD; color: #0D47A1; }
+.source-tag.bilibili   { background: #FCE4EC; color: #C62828; }
 
 /* --- Twitter tweet styles --- */
 .tw-author {

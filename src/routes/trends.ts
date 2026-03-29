@@ -4,14 +4,32 @@ import { AnalysisService } from '../services/analysis'
 
 const router = Router()
 
-// GET /api/trends - 获取热点列表（分页、筛选来源）
+// GET /api/trends - 获取热点列表（分页、筛选来源、分类）
 router.get('/trends', async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1)
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50))
   const source = req.query.source as string | undefined
+  const category = req.query.category as string | undefined
   const skip = (page - 1) * limit
 
-  const where: any = source ? { source } : {}
+  // AI 相关数据源
+  const AI_SOURCES = ['github', 'huggingface', 'hackernews', 'twitter', 'bingnews']
+  // 综合数据源
+  const GENERAL_SOURCES = ['google', 'reddit', 'duckduckgo', 'v2ex', 'bilibili']
+
+  const where: any = {}
+
+  // 按分类筛选
+  if (category === 'ai') {
+    where.source = { in: AI_SOURCES }
+  } else if (category === 'general') {
+    where.source = { in: GENERAL_SOURCES }
+  }
+
+  // 再叠加单个来源筛选
+  if (source) {
+    where.source = source
+  }
 
   // 默认排除30天前的旧内容
   const maxAgeDays = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 30))

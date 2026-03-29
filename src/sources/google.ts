@@ -22,20 +22,28 @@ export class GoogleTrendsSource implements TrendSource {
 
     $('item').each((_, el) => {
       const title = $(el).find('title').text().trim()
-      const link = $(el).find('link').text().trim()
       const traffic = $(el).find('ht\\:approx_traffic, approx_traffic').text().trim()
       const pubDate = $(el).find('pubDate').text().trim()
       const score = parseInt(traffic.replace(/[^0-9]/g, '')) || 0
 
+      // 提取第一条新闻链接作为 URL，回退为 Google 搜索链接
+      const firstNewsUrl = $(el).find('ht\\:news_item_url, news_item_url').first().text().trim()
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(title)}`
+      const url = firstNewsUrl || searchUrl
+
+      // 提取新闻来源
+      const newsSource = $(el).find('ht\\:news_item_source, news_item_source').first().text().trim()
+      const newsTitle = $(el).find('ht\\:news_item_title, news_item_title').first().text().trim()
+
       if (title) {
         items.push({
           title,
-          url: link || undefined,
+          url,
           source: this.name,
           score,
           externalId: `google-${title.toLowerCase().replace(/\s+/g, '-')}`,
           publishedAt: pubDate ? new Date(pubDate) : undefined,
-          extra: JSON.stringify({ traffic }),
+          extra: JSON.stringify({ traffic, newsSource, newsTitle, searchUrl }),
         })
       }
     })

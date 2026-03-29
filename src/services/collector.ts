@@ -9,6 +9,7 @@ import { GitHubTrendingSource } from '../sources/github'
 import { HuggingFaceSource } from '../sources/huggingface'
 import { V2EXSource } from '../sources/v2ex'
 import { BingNewsSource } from '../sources/bingnews'
+import { BilibiliSource } from '../sources/bilibili'
 
 export class CollectorService {
   private sources: TrendSource[] = []
@@ -22,6 +23,7 @@ export class CollectorService {
     this.sources.push(new HuggingFaceSource())
     this.sources.push(new V2EXSource())
     this.sources.push(new BingNewsSource())
+    this.sources.push(new BilibiliSource())
 
     const twitterApiKey = process.env.TWITTER_API_KEY
     if (twitterApiKey && twitterApiKey !== 'your_twitterapi_io_key_here') {
@@ -94,6 +96,7 @@ export class CollectorService {
           },
           update: {
             score: item.score,
+            url: item.url,
             extra: item.extra,
             fetchedAt: new Date(),
             publishedAt: item.publishedAt,

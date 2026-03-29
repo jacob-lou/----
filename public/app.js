@@ -4,11 +4,12 @@
   const socket = io();
   let currentSource = 'all';
   let currentPage = 1;
+  let currentCategory = 'ai'; // 'ai' | 'general'
   const PAGE_SIZE = 50;
   let currentDetailKeywordId = null;
   let alertCount = 0;
 
-  // Elements — Trends
+  // Elements — AI Trends
   const trendsList = document.getElementById('trendsList');
   const sourceFilters = document.getElementById('sourceFilters');
   const refreshBtn = document.getElementById('refreshBtn');
@@ -21,9 +22,17 @@
   const analysisTopics = document.getElementById('analysisTopics');
   const analysisTime = document.getElementById('analysisTime');
 
+  // Elements — General Trends
+  const generalTrendsList = document.getElementById('generalTrendsList');
+  const generalSourceFilters = document.getElementById('generalSourceFilters');
+  const generalPaginationEl = document.getElementById('generalPagination');
+  let generalSource = 'all';
+  let generalPage = 1;
+
   // Elements — Tabs
   const tabBtns = document.querySelectorAll('.tab-item');
   const trendsTab = document.getElementById('trendsTab');
+  const generalTab = document.getElementById('generalTab');
   const keywordsTab = document.getElementById('keywordsTab');
 
   // Elements — Keywords
@@ -54,9 +63,19 @@
       var tab = btn.dataset.tab;
       trendsTab.style.display = tab === 'trends' ? '' : 'none';
       trendsTab.classList.toggle('active', tab === 'trends');
+      generalTab.style.display = tab === 'general' ? '' : 'none';
+      generalTab.classList.toggle('active', tab === 'general');
       keywordsTab.style.display = tab === 'keywords' ? '' : 'none';
       keywordsTab.classList.toggle('active', tab === 'keywords');
-      if (tab === 'keywords') {
+      if (tab === 'trends') {
+        currentCategory = 'ai';
+        loadTrends();
+        loadSources('ai');
+      } else if (tab === 'general') {
+        currentCategory = 'general';
+        loadGeneralTrends();
+        loadSources('general');
+      } else if (tab === 'keywords') {
         loadKeywords();
         loadRecentAlerts();
       }
@@ -68,6 +87,7 @@
     var params = new URLSearchParams({
       page: String(currentPage),
       limit: String(PAGE_SIZE),
+      category: 'ai',
     });
     if (currentSource !== 'all') params.set('source', currentSource);
 
@@ -82,18 +102,52 @@
     try {
       var res = await fetch('/api/trends?' + params.toString());
       var data = await res.json();
-      renderTrends(data.items);
-      renderPagination(data.pagination);
+      renderTrends(data.items, trendsList, currentPage);
+      renderPagination(data.pagination, paginationEl, function (p) { currentPage = p; loadTrends(); });
     } catch {
       trendsList.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
     }
   }
 
-  async function loadSources() {
+  async function loadGeneralTrends() {
+    var params = new URLSearchParams({
+      page: String(generalPage),
+      limit: String(PAGE_SIZE),
+      category: 'general',
+    });
+    if (generalSource !== 'all') params.set('source', generalSource);
+
+    generalTrendsList.innerHTML = '<div class="skeleton-group">'
+      + '<div class="skeleton-line w80"></div>'
+      + '<div class="skeleton-line w60"></div>'
+      + '<div class="skeleton-line w80"></div>'
+      + '<div class="skeleton-line w40"></div>'
+      + '<div class="skeleton-line w80"></div>'
+      + '</div>';
+
+    try {
+      var res = await fetch('/api/trends?' + params.toString());
+      var data = await res.json();
+      renderTrends(data.items, generalTrendsList, generalPage);
+      renderPagination(data.pagination, generalPaginationEl, function (p) { generalPage = p; loadGeneralTrends(); });
+    } catch {
+      generalTrendsList.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+    }
+  }
+
+  async function loadSources(category) {
     try {
       var res = await fetch('/api/trends/sources');
       var data = await res.json();
-      renderSourceFilters(data.sources);
+      var aiSources = ['github', 'huggingface', 'hackernews', 'twitter', 'bingnews'];
+      var generalSources = ['google', 'reddit', 'duckduckgo', 'v2ex', 'bilibili'];
+      if (category === 'general') {
+        var filtered = data.sources.filter(function (s) { return generalSources.indexOf(s) !== -1; });
+        renderSourceFilters(filtered, generalSourceFilters, generalSource);
+      } else {
+        var filtered = data.sources.filter(function (s) { return aiSources.indexOf(s) !== -1; });
+        renderSourceFilters(filtered, sourceFilters, currentSource);
+      }
     } catch {}
   }
 
@@ -146,13 +200,15 @@
   }
 
   // === Render: Trends ===
-  function renderTrends(items) {
+  function renderTrends(items, container, page) {
+    if (!container) container = trendsList;
+    if (!page) page = currentPage;
     if (!items || items.length === 0) {
-      trendsList.innerHTML = '<div class="empty-state">暂无数据，等待首次采集…</div>';
+      container.innerHTML = '<div class="empty-state">暂无数据，等待首次采集…</div>';
       return;
     }
 
-    trendsList.innerHTML = items.map(function (item, i) {
+    container.innerHTML = items.map(function (item, i) {
       var extra = {};
       try { extra = JSON.parse(item.extra || '{}'); } catch {}
 
@@ -173,7 +229,7 @@
           : esc(item.title);
       }
 
-      var rankNum = (currentPage - 1) * PAGE_SIZE + i + 1;
+      var rankNum = (page - 1) * PAGE_SIZE + i + 1;
       var rankCls = rankNum <= 3 ? ' top3' : '';
 
       var metaParts = [];
@@ -202,6 +258,14 @@
         if (extra.author) metaParts.push('@' + esc(extra.author));
       } else if (item.source === 'bingnews') {
         if (extra.newsSource) metaParts.push(esc(extra.newsSource));
+      } else if (item.source === 'bilibili') {
+        if (extra.type === 'hot_search') {
+          metaParts.push('热搜');
+        } else if (extra.type === 'tech_video') {
+          if (extra.views) metaParts.push('▶ ' + formatScore(extra.views));
+          if (extra.likes) metaParts.push('❤ ' + formatScore(extra.likes));
+          if (extra.author) metaParts.push(esc(extra.author));
+        }
       } else {
         if (extra.num_comments) metaParts.push(formatScore(extra.num_comments) + ' comments');
         if (extra.subreddit) metaParts.push('r/' + esc(extra.subreddit));
@@ -229,35 +293,49 @@
   }
 
   // === Render: Source filters ===
-  function renderSourceFilters(sources) {
+  function renderSourceFilters(sources, container, activeSource) {
+    if (!container) container = sourceFilters;
+    if (!activeSource) activeSource = currentSource;
     var labels = {
       google: 'Google', reddit: 'Reddit', hackernews: 'HN', duckduckgo: 'DDG',
-      twitter: 'Twitter', github: 'GitHub', huggingface: 'HF', v2ex: 'V2EX', bingnews: 'Bing News'
+      twitter: 'Twitter', github: 'GitHub', huggingface: 'HF', v2ex: 'V2EX', bingnews: 'Bing News',
+      bilibili: 'B站'
     };
-    var html = '<button class="pill' + (currentSource === 'all' ? ' active' : '') + '" data-source="all">全部</button>';
+    var html = '<button class="pill' + (activeSource === 'all' ? ' active' : '') + '" data-source="all">全部</button>';
     sources.forEach(function (s) {
-      html += '<button class="pill' + (currentSource === s ? ' active' : '') + '" data-source="' + s + '">'
+      html += '<button class="pill' + (activeSource === s ? ' active' : '') + '" data-source="' + s + '">'
         + (labels[s] || s) + '</button>';
     });
-    sourceFilters.innerHTML = html;
+    container.innerHTML = html;
   }
 
   // === Render: Pagination ===
-  function renderPagination(pagination) {
+  function renderPagination(pagination, container, onPageChange) {
+    if (!container) container = paginationEl;
+    var activePage = container === generalPaginationEl ? generalPage : currentPage;
     if (!pagination || pagination.totalPages <= 1) {
-      paginationEl.innerHTML = '';
+      container.innerHTML = '';
       return;
     }
-    var html = '<button ' + (currentPage <= 1 ? 'disabled' : '') + ' data-page="' + (currentPage - 1) + '">上一页</button>';
+    var html = '<button ' + (activePage <= 1 ? 'disabled' : '') + ' data-page="' + (activePage - 1) + '">上一页</button>';
     for (var p = 1; p <= pagination.totalPages; p++) {
-      if (pagination.totalPages > 7 && p > 2 && p < pagination.totalPages - 1 && Math.abs(p - currentPage) > 1) {
+      if (pagination.totalPages > 7 && p > 2 && p < pagination.totalPages - 1 && Math.abs(p - activePage) > 1) {
         if (p === 3 || p === pagination.totalPages - 2) html += '<button disabled>…</button>';
         continue;
       }
-      html += '<button ' + (p === currentPage ? 'class="current" disabled' : '') + ' data-page="' + p + '">' + p + '</button>';
+      html += '<button ' + (p === activePage ? 'class="current" disabled' : '') + ' data-page="' + p + '">' + p + '</button>';
     }
-    html += '<button ' + (currentPage >= pagination.totalPages ? 'disabled' : '') + ' data-page="' + (currentPage + 1) + '">下一页</button>';
-    paginationEl.innerHTML = html;
+    html += '<button ' + (activePage >= pagination.totalPages ? 'disabled' : '') + ' data-page="' + (activePage + 1) + '">下一页</button>';
+    container.innerHTML = html;
+
+    if (onPageChange) {
+      container.onclick = function (e) {
+        if (e.target.tagName === 'BUTTON' && e.target.dataset.page) {
+          onPageChange(parseInt(e.target.dataset.page));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      };
+    }
   }
 
   // === Render: AI Analysis ===
@@ -479,7 +557,16 @@
       currentSource = e.target.dataset.source;
       currentPage = 1;
       loadTrends();
-      loadSources();
+      loadSources('ai');
+    }
+  });
+
+  generalSourceFilters.addEventListener('click', function (e) {
+    if (e.target.classList.contains('pill')) {
+      generalSource = e.target.dataset.source;
+      generalPage = 1;
+      loadGeneralTrends();
+      loadSources('general');
     }
   });
 
@@ -522,7 +609,9 @@
     statusEl.textContent = '新数据 ' + data.items.length + ' 条';
     statusEl.className = 'conn-badge online';
     loadTrends();
-    loadSources();
+    loadGeneralTrends();
+    loadSources('ai');
+    loadSources('general');
   });
 
   socket.on('fetch-status', function (data) {
@@ -595,6 +684,6 @@
 
   // === Init ===
   loadTrends();
-  loadSources();
+  loadSources('ai');
   loadAnalysis();
 })();
