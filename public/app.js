@@ -158,6 +158,56 @@
       else if (statusEl.classList.contains('offline')) statusEl.textContent = t('disconnected');
       else statusEl.textContent = t('connecting');
     }
+    // Keywords tab
+    if (keywordInput) keywordInput.placeholder = t('kwPlaceholder');
+    if (scopeInput) scopeInput.placeholder = t('kwScope');
+    // Add button
+    if (addKeywordBtn) {
+      var svg = addKeywordBtn.querySelector('svg');
+      addKeywordBtn.textContent = '';
+      if (svg) { addKeywordBtn.appendChild(svg); addKeywordBtn.appendChild(document.createTextNode(' ')); }
+      addKeywordBtn.appendChild(document.createTextNode(t('addBtn')));
+    }
+    // Check / Collect buttons
+    [['checkKeywordsBtn','checkNow'],['collectKeywordTrendsBtn','collectTrends']].forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (!el) return;
+      var svg = el.querySelector('svg');
+      el.textContent = '';
+      if (svg) { el.appendChild(svg); el.appendChild(document.createTextNode(' ')); }
+      el.appendChild(document.createTextNode(t(pair[1])));
+    });
+    // Close detail button
+    if (closeDetail) closeDetail.setAttribute('aria-label', t('closeTxt'));
+    // Detail tabs
+    document.querySelectorAll('.detail-tab-btn').forEach(function(btn) {
+      if (btn.dataset.dtab === 'alerts') btn.textContent = t('alertsTab');
+      else if (btn.dataset.dtab === 'ktrends') btn.textContent = t('trendsTab');
+    });
+    // Keyword sort dropdown
+    var kwSortItems = document.querySelectorAll('#kwSortDropdown .dropdown-item');
+    kwSortItems.forEach(function(el) {
+      if (el.dataset.value === 'fetchedAt') el.textContent = t('byTime');
+      else if (el.dataset.value === 'score') el.textContent = t('byHeat');
+    });
+    var kwSortTrig = document.querySelector('#kwSortDropdown .dropdown-trigger');
+    if (kwSortTrig) {
+      var active = document.querySelector('#kwSortDropdown .dropdown-item.active');
+      if (active) kwSortTrig.querySelector('span').textContent = active.textContent.trim();
+    }
+    // Keyword time pills (has "all" = 0)
+    document.querySelectorAll('#kwTimePills .pill-sm').forEach(function(p) {
+      var d = p.dataset.days;
+      if (d === '0') p.textContent = t('allTime');
+      else if (dmap[d]) p.textContent = t(dmap[d]);
+    });
+    // Recent alerts section title
+    var raTitle = document.querySelector('.section-title');
+    if (raTitle) {
+      var svg = raTitle.querySelector('svg');
+      raTitle.textContent = '';
+      if (svg) { raTitle.appendChild(svg); raTitle.appendChild(document.createTextNode(' ' + t('recentAlerts'))); }
+    }
   }
 
   // Per-tab analysis debounce timers
@@ -474,7 +524,7 @@
       var data = await res.json();
       renderKeywordList(data.keywords);
     } catch {
-      keywordListEl.innerHTML = '<div class="empty-state">加载失败</div>';
+      keywordListEl.innerHTML = '<div class="empty-state">' + t('loadFailed') + '</div>';
     }
   }
 
@@ -492,7 +542,7 @@
       var data = await res.json();
       renderDetailAlerts(data.alerts);
     } catch {
-      detailAlerts.innerHTML = '<div class="empty-state">加载失败</div>';
+      detailAlerts.innerHTML = '<div class="empty-state">' + t('loadFailed') + '</div>';
     }
   }
 
@@ -504,7 +554,7 @@
       var data = await res.json();
       renderDetailTrends(data.items);
     } catch {
-      detailTrendsInner.innerHTML = '<div class="empty-state">加载失败</div>';
+      detailTrendsInner.innerHTML = '<div class="empty-state">' + t('loadFailed') + '</div>';
     }
   }
 
