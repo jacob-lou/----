@@ -1,24 +1,26 @@
 # 🔥 AI News Sentinel
 
-**实时多源热点聚合系统** — 从 10 个全球平台采集热门话题，AI 智能分类 + 翻译 + 重要度排序，30 分钟自动刷新。
+**Real-time multi-source hot topics aggregation system** — Collects trending topics from 10 global platforms with AI-powered classification, translation, and importance ranking. Auto-refreshes every 30 minutes.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 
+[中文文档](README.zh.md)
+
 ---
 
-## ✨ 功能特性
+## ✨ Features
 
-- **10 个数据源**：Google Trends、Reddit、HackerNews、GitHub Trending、HuggingFace、Twitter/X、DuckDuckGo、Bing News、V2EX、Bilibili
-- **AI 智能分析**：基于 OpenRouter 的自动分类、多语言翻译、趋势总结
-- **实时推送**：WebSocket 驱动，新热点即时推送至前端
-- **关键词监控**：设置关注词，自动追踪并告警
-- **重要度排序**：四因子评估（热度 × 互动 × 跨源 × 时效）
-- **全站 i18n**：中英文界面切换，标题自动翻译
-- **Agent Skill**：开箱即用的 AI Agent 技能包，让 Copilot/Claude 直接调用采集能力
+- **10 Data Sources**: Google Trends, Reddit, HackerNews, GitHub Trending, HuggingFace, Twitter/X, DuckDuckGo, Bing News, V2EX, Bilibili
+- **AI-Powered Analysis**: Auto-classification, multilingual translation, and trend summarization via OpenRouter
+- **Real-time Push**: WebSocket-driven instant updates when new trends arrive
+- **Keyword Monitoring**: Set watch keywords with automatic tracking and alerts
+- **Importance Ranking**: Four-factor scoring (popularity × engagement × cross-source × timeliness)
+- **Full i18n**: Chinese/English UI toggle with automatic title translation
+- **Agent Skill**: Standalone AI Agent skill pack — lets Copilot/Claude directly use the data collection capabilities
 
-## 🏗️ 系统架构
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -31,7 +33,7 @@
 │                                                          │
 │  ┌────────────┐  ┌────────────┐  ┌────────────────┐    │
 │  │ REST API   │  │ Socket.IO  │  │ Cron Scheduler │    │
-│  │ (17 端点)  │  │ (实时推送)  │  │ (定时采集)     │    │
+│  │ (17 routes)│  │ (realtime) │  │(scheduled jobs)│    │
 │  └─────┬──────┘  └─────┬──────┘  └───────┬────────┘    │
 │        └───────────────┼──────────────────┘              │
 │                        │                                 │
@@ -42,7 +44,7 @@
 │  └─────────────────────┬───────────────────────────────┘│
 │                        │                                 │
 │  ┌─────────────────────┴───────────────────────────────┐│
-│  │           Source Collector Layer (10 源)              ││
+│  │         Source Collector Layer (10 sources)           ││
 │  │  Google │ Reddit │ HN │ GitHub │ HuggingFace        ││
 │  │  DDG │ Bing │ V2EX │ Bilibili │ Twitter/X           ││
 │  └─────────────────────┬───────────────────────────────┘│
@@ -53,14 +55,14 @@
 └──────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Prerequisites
 
 - Node.js ≥ 18
 - npm / pnpm
 
-### 安装
+### Installation
 
 ```bash
 git clone https://github.com/jacob-lou/AI-News-Sentinel.git
@@ -68,202 +70,180 @@ cd AI-News-Sentinel
 npm install
 ```
 
-### 配置环境变量
+### Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env`：
+Edit `.env`:
 
 ```env
-# 必需 — OpenRouter API（用于 AI 分类/翻译/分析）
+# Required — OpenRouter API (for AI classification/translation/analysis)
 OPENROUTER_API_KEY=sk-or-v1-xxxxx
 
-# 可选 — Twitter/X 数据源
+# Optional — Twitter/X data source
 TWITTER_API_KEY=your-twitter-api-key
 
-# 可选 — 服务端口（默认 3000）
+# Optional — Server port (default: 3000)
 PORT=3000
 ```
 
-> **注意**：没有 `TWITTER_API_KEY` 时，Twitter 源会自动跳过，其他 9 个源正常工作。
+> **Note**: Without `TWITTER_API_KEY`, the Twitter source is skipped automatically. The other 9 sources work normally.
 
-### 初始化数据库
+### Initialize Database
 
 ```bash
 npx prisma db push
 ```
 
-### 启动
+### Start
 
 ```bash
-# 开发模式（热重载）
+# Development mode (hot reload)
 npm run dev
 
-# 生产模式
+# Production mode
 npm run build
 npm start
 ```
 
-访问 `http://localhost:3000` 即可看到热点面板。
+Visit `http://localhost:3000` to see the dashboard.
 
-## 📊 数据源一览
+## 📊 Data Sources
 
-| 数据源 | 采集方式 | 数据内容 | 需要 API Key |
-|--------|---------|---------|:---:|
-| Google Trends | RSS Feed | 热搜关键词 + 热度值 | ❌ |
-| Reddit | JSON API | 11 个 AI subreddit 热帖 | ❌ |
-| HackerNews | Algolia API | 热门技术故事 | ❌ |
-| GitHub Trending | HTML 解析 | 当日热门仓库 | ❌ |
-| HuggingFace | REST API | 热门模型 + 论文 | ❌ |
-| DuckDuckGo | 补全 + 即时答案 | 搜索趋势 | ❌ |
-| Bing News | RSS Feed | 科技新闻 | ❌ |
-| V2EX | REST API | 中文技术社区热帖 | ❌ |
-| Bilibili | Web API | 热搜 + 科技区热门视频 | ❌ |
-| Twitter/X | twitterapi.io | AI 热门推文 | ✅ |
+| Source | Method | Content | API Key Required |
+|--------|--------|---------|:---:|
+| Google Trends | RSS Feed | Trending keywords + popularity | ❌ |
+| Reddit | JSON API | Hot posts from 11 AI subreddits | ❌ |
+| HackerNews | Algolia API | Top tech stories | ❌ |
+| GitHub Trending | HTML Parsing | Daily trending repos | ❌ |
+| HuggingFace | REST API | Popular models + papers | ❌ |
+| DuckDuckGo | Autocomplete + Instant Answers | Search trends | ❌ |
+| Bing News | RSS Feed | Tech news | ❌ |
+| V2EX | REST API | Chinese tech community hot posts | ❌ |
+| Bilibili | Web API | Hot searches + tech videos | ❌ |
+| Twitter/X | twitterapi.io | AI trending tweets | ✅ |
 
-## 🤖 Agent Skill（AI 助手技能包）
+## 🤖 Agent Skill
 
-系统附带一个独立的 **Agent Skill**，可让 GitHub Copilot、Claude 等 AI 助手直接使用热点采集能力。
+This project includes a standalone **Agent Skill** that lets AI assistants (GitHub Copilot, Claude, etc.) directly use the data collection capabilities.
 
-### 核心理念：AI Agent = 分析引擎
+### Core Concept: AI Agent = Analysis Engine
 
 ```
-用户提问 → Agent 执行脚本抓取原始数据 → Agent 自身分析/分类/翻译 → Agent 输出报告
+User asks question → Agent runs script to fetch raw data → Agent analyzes/classifies/translates → Agent outputs report
 ```
 
-脚本只负责纯 HTTP 数据抓取，**零 AI API 调用**。所有智能分析由 Agent 自身完成。
+Scripts handle pure HTTP data fetching only — **zero AI API calls**. All intelligence is provided by the Agent itself.
 
-### 使用方式
+### Usage
 
 ```bash
-# 采集全部数据源的热点
+# Fetch trends from all sources
 npx tsx skills/hot-topics-monitor/scripts/fetch-trends.ts
 
-# 指定数据源 + 数量限制
+# Specify sources and limit
 npx tsx skills/hot-topics-monitor/scripts/fetch-trends.ts --sources hackernews,reddit --limit 10
 
-# 跨源关键词搜索
+# Cross-source keyword search
 npx tsx skills/hot-topics-monitor/scripts/search-keyword.ts "GPT-5"
 npx tsx skills/hot-topics-monitor/scripts/search-keyword.ts "DeepSeek" --sources reddit,hackernews
 ```
 
-**Skill 位置**：`skills/hot-topics-monitor/SKILL.md`
+> The skill is also available as a standalone package: [hot-topics-monitor-skill](https://github.com/jacob-lou/hot-topics-monitor-skill)
 
-> 详见 [Skill 文档](skills/hot-topics-monitor/SKILL.md) 了解完整的分析框架和工作流。
-
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 .
 ├── src/
-│   ├── index.ts              # 入口文件
-│   ├── app.ts                # Express 应用配置
-│   ├── db.ts                 # Prisma 客户端
-│   ├── socket.ts             # Socket.IO 配置
-│   ├── scheduler.ts          # 定时任务（30min 全源 + 10min 关键词）
+│   ├── index.ts              # Entry point
+│   ├── app.ts                # Express app config
+│   ├── db.ts                 # Prisma client
+│   ├── socket.ts             # Socket.IO config
+│   ├── scheduler.ts          # Cron jobs (30min all-source + 10min keywords)
 │   ├── routes/
-│   │   ├── trends.ts         # 热点 API（CRUD + 分析 + 采集）
-│   │   └── keywords.ts       # 关键词监控 API
+│   │   ├── trends.ts         # Trends API (CRUD + analysis + collection)
+│   │   └── keywords.ts       # Keyword monitoring API
 │   ├── services/
-│   │   ├── collector.ts      # 采集调度服务
-│   │   ├── classifier.ts     # AI 分类服务
-│   │   ├── translator.ts     # 多语言翻译服务
-│   │   ├── importance.ts     # 重要度评估
-│   │   ├── analysis.ts       # AI 趋势分析
-│   │   ├── monitor.ts        # 关键词监控服务
-│   │   └── keyword-search.ts # 关键词搜索服务
-│   └── sources/              # 10 个数据源采集器
-│       ├── base.ts
-│       ├── google.ts
-│       ├── reddit.ts
-│       ├── hackernews.ts
-│       ├── github.ts
-│       ├── huggingface.ts
-│       ├── duckduckgo.ts
-│       ├── bingnews.ts
-│       ├── v2ex.ts
-│       ├── bilibili.ts
-│       └── twitter.ts
-├── public/                   # 前端静态文件
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
+│   │   ├── collector.ts      # Collection orchestration
+│   │   ├── classifier.ts     # AI classification
+│   │   ├── translator.ts     # Multilingual translation
+│   │   ├── importance.ts     # Importance scoring
+│   │   ├── analysis.ts       # AI trend analysis
+│   │   ├── monitor.ts        # Keyword monitoring
+│   │   └── keyword-search.ts # Keyword search
+│   └── sources/              # 10 source collectors
+├── public/                   # Frontend static files
 ├── prisma/
-│   └── schema.prisma         # 数据库模型（7 张表）
-├── skills/                   # Agent Skill（独立技能包）
+│   └── schema.prisma         # Database models (7 tables)
+├── skills/                   # Agent Skill (standalone skill pack)
 │   └── hot-topics-monitor/
-│       ├── SKILL.md
-│       ├── scripts/
-│       └── references/
-└── docs/                     # 项目文档
-    ├── 需求文档.md
-    ├── 技术方案.md
-    └── 方案日志.md
+└── docs/                     # Documentation (Chinese)
 ```
 
-## 🗄️ 数据模型
+## 🗄️ Data Models
 
-| 模型 | 用途 |
-|------|------|
-| `TrendItem` | 热点记录（标题、来源、评分、分类、翻译、重要度） |
-| `CategoryRule` | 分类规则（关键词 → 分类映射） |
-| `FetchLog` | 采集日志（来源、状态、耗时） |
-| `TrendAnalysis` | AI 分析报告缓存 |
-| `MonitorKeyword` | 关键词监控配置 |
-| `KeywordAlert` | 关键词告警记录 |
-| `KeywordTrend` | 关键词趋势数据 |
+| Model | Purpose |
+|-------|---------|
+| `TrendItem` | Trend records (title, source, score, category, translation, importance) |
+| `CategoryRule` | Classification rules (keyword → category mapping) |
+| `FetchLog` | Collection logs (source, status, duration) |
+| `TrendAnalysis` | AI analysis report cache |
+| `MonitorKeyword` | Keyword monitoring configuration |
+| `KeywordAlert` | Keyword alert records |
+| `KeywordTrend` | Keyword trend data |
 
-## 🔌 API 端点
+## 🔌 API Endpoints
 
-### 热点相关
+### Trends
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/api/trends` | 获取热点列表（支持分页、来源筛选、分类筛选） |
-| `GET` | `/api/trends/sources` | 获取可用数据源列表 |
-| `GET` | `/api/trends/categories` | 获取分类列表及计数 |
-| `GET` | `/api/trends/analysis` | 获取 AI 趋势分析报告 |
-| `POST` | `/api/trends/fetch` | 手动触发全源采集 |
-| `POST` | `/api/trends/analyze` | 触发 AI 分析 |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/trends` | List trends (pagination, source/category filters) |
+| `GET` | `/api/trends/sources` | List available data sources |
+| `GET` | `/api/trends/categories` | List categories with counts |
+| `GET` | `/api/trends/analysis` | Get AI trend analysis report |
+| `POST` | `/api/trends/fetch` | Trigger manual collection |
+| `POST` | `/api/trends/analyze` | Trigger AI analysis |
 
-### 关键词监控
+### Keyword Monitoring
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/api/keywords` | 获取监控关键词列表 |
-| `POST` | `/api/keywords` | 添加监控关键词 |
-| `DELETE` | `/api/keywords/:id` | 删除关键词 |
-| `GET` | `/api/keywords/:id/alerts` | 获取关键词告警列表 |
-| `GET` | `/api/keywords/:id/trends` | 获取关键词趋势 |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/keywords` | List monitored keywords |
+| `POST` | `/api/keywords` | Add monitored keyword |
+| `DELETE` | `/api/keywords/:id` | Remove keyword |
+| `GET` | `/api/keywords/:id/alerts` | List keyword alerts |
+| `GET` | `/api/keywords/:id/trends` | Get keyword trends |
 
-### WebSocket 事件
+### WebSocket Events
 
-| 事件 | 方向 | 说明 |
-|------|------|------|
-| `newTrends` | Server → Client | 新热点推送 |
-| `fetchStatus` | Server → Client | 采集进度 |
-| `keywordAlert` | Server → Client | 关键词命中告警 |
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| `newTrends` | Server → Client | New trends push |
+| `fetchStatus` | Server → Client | Collection progress |
+| `keywordAlert` | Server → Client | Keyword match alert |
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
 npm test
 ```
 
-## 📜 版本历史
+## 📜 Changelog
 
-| 版本 | 主要变更 |
-|------|---------|
-| **V1.5** | Agent Skill — 热点监控工具封装为独立 AI 技能包 |
-| **V1.4** | 多语言翻译 + 信息增强 + 全站 i18n |
-| **V1.3** | AI 分类 + 重要度排序 + 关键词监控 |
-| **V1.2** | 新增 5 个数据源（GitHub, HF, V2EX, Bing, Bilibili） |
-| **V1.1** | AI 趋势分析 + 跨源搜索 |
-| **V1.0** | 基础版 — 5 源采集 + 实时推送 + 前端面板 |
+| Version | Changes |
+|---------|---------|
+| **V1.5** | Agent Skill — Standalone AI skill pack for hot topics monitoring |
+| **V1.4** | Multilingual translation + content enrichment + full i18n |
+| **V1.3** | AI classification + importance ranking + keyword monitoring |
+| **V1.2** | 5 new sources (GitHub, HuggingFace, V2EX, Bing, Bilibili) |
+| **V1.1** | AI trend analysis + cross-source search |
+| **V1.0** | Initial release — 5-source collection + realtime push + dashboard |
 
-> 完整变更记录见 [docs/方案日志.md](docs/方案日志.md)
+> Full changelog: [docs/方案日志.md](docs/方案日志.md)
 
 ## 📄 License
 
