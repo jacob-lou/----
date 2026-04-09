@@ -10,6 +10,23 @@
 
 ---
 
+## 🖼️ Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/monitor.png" alt="Keyword Monitoring & Alerts" width="90%"><br>
+  <b>Keyword Monitoring & Alerts:</b> Set keywords, get real-time alerts and trend tracking for any topic.
+</p>
+<p align="center">
+  <img src="docs/screenshots/general.png" alt="General Trends & AI Analysis" width="90%"><br>
+  <b>General Trends & AI Analysis:</b> Aggregates and analyzes hot topics across Reddit, Google, Hacker News, and more, with AI-generated summaries and topic clustering.
+</p>
+<p align="center">
+  <img src="docs/screenshots/ai-trends.png" alt="AI Trends Deep Dive" width="90%"><br>
+  <b>AI Trends Deep Dive:</b> Focuses on the latest AI/LLM news, model releases, and controversies, with English/Chinese switch and detailed AI-powered analysis.
+</p>
+
+---
+
 ## ✨ Features
 
 - **10 Data Sources**: Google Trends, Reddit, HackerNews, GitHub Trending, HuggingFace, Twitter/X, DuckDuckGo, Bing News, V2EX, Bilibili
@@ -244,6 +261,18 @@ npm test
 | **V1.0** | Initial release — 5-source collection + realtime push + dashboard |
 
 > Full changelog: [docs/方案日志.md](docs/方案日志.md)
+
+## 🛠️ Planned Features
+
+- **Email Alerts**: Get instant email notifications for critical keyword matches or trending events
+- **Mobile Push**: Push notifications to your phone for urgent trends
+- **Custom Dashboards**: User-defined dashboards and saved filters
+- **Custom topics**：User setup their own topic focus beside AI.
+- **Historical Analytics**: Visualize trend evolution and keyword history
+- **Multi-user Support**: Invite team members, manage permissions
+- **API Access**: Public API for integration with other tools
+
+*Have a feature request? Open an issue or PR!*
 
 ## 📄 License
 
