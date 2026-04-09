@@ -71,7 +71,7 @@ router.post('/keywords/collect', async (_req: Request, res: Response) => {
 
 // DELETE /api/keywords/:id - 删除监控关键词
 router.delete('/keywords/:id', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id as string)
   if (isNaN(id)) {
     res.status(400).json({ error: '无效的ID' })
     return
@@ -82,7 +82,7 @@ router.delete('/keywords/:id', async (req: Request, res: Response) => {
 
 // PATCH /api/keywords/:id - 更新关键词（启用/禁用）
 router.patch('/keywords/:id', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id as string)
   if (isNaN(id)) {
     res.status(400).json({ error: '无效的ID' })
     return
@@ -98,7 +98,7 @@ router.patch('/keywords/:id', async (req: Request, res: Response) => {
 
 // GET /api/keywords/:id/alerts - 获取某个关键词的告警
 router.get('/keywords/:id/alerts', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id as string)
   if (isNaN(id)) {
     res.status(400).json({ error: '无效的ID' })
     return
@@ -118,7 +118,7 @@ router.get('/keywords/:id/alerts', async (req: Request, res: Response) => {
 
 // GET /api/keywords/:id/trends - 获取关键词范围内的热点（支持排序、筛选）
 router.get('/keywords/:id/trends', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id as string)
   if (isNaN(id)) {
     res.status(400).json({ error: '无效的ID' })
     return

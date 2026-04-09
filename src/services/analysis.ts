@@ -7,6 +7,7 @@ export interface AnalysisFilter {
   search?: string
   days?: number
   minScore?: number
+  lang?: string
 }
 
 export class AnalysisService {
@@ -33,6 +34,7 @@ export class AnalysisService {
       search: filter.search || '',
       days: filter.days || 30,
       minScore: filter.minScore || 0,
+      lang: filter.lang || 'zh',
     }
     return createHash('md5').update(JSON.stringify(normalized)).digest('hex').substring(0, 12)
   }
@@ -95,9 +97,37 @@ export class AnalysisService {
       .map((t) => `[${t.source}] ${t.title} (score: ${t.score})`)
       .join('\n')
 
-    const categoryLabel = category === 'ai' ? 'AI/科技' : category === 'general' ? '综合' : '全部'
+    const lang = filter.lang || 'zh'
+    const isEn = lang === 'en'
+    const categoryLabel = isEn
+      ? (category === 'ai' ? 'AI/Tech' : category === 'general' ? 'General' : 'All')
+      : (category === 'ai' ? 'AI/科技' : category === 'general' ? '综合' : '全部')
 
-    const prompt = `你是一个热点分析专家。以下是从多个平台采集到的【${categoryLabel}】类最新热点数据。
+    const prompt = isEn
+      ? `You are a trend analysis expert. Below is the latest【${categoryLabel}】trending data collected from multiple platforms.
+
+Analyze these trends and return the following JSON format:
+{
+  "summary": "Write a 2-3 sentence overall trend overview in English",
+  "topics": [
+    {
+      "name": "Topic name in English",
+      "heat": "high/medium/low",
+      "description": "One sentence description in English",
+      "sources": ["source1", "source2"]
+    }
+  ]
+}
+
+Requirements:
+1. Extract 5-8 most important trending topics
+2. Merge duplicate or related topics from different sources
+3. Sort by heat from high to low
+4. Return JSON only, no other content
+
+Trending data:
+${trendsList}`
+      : `你是一个热点分析专家。以下是从多个平台采集到的【${categoryLabel}】类最新热点数据。
 
 请分析这些热点，返回以下 JSON 格式：
 {

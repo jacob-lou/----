@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 // Import detectLanguage directly
 // We need to test the language detection and translation helpers
-const { detectLanguage, LANG_LABELS } = await import('../services/translator')
+import { detectLanguage, LANG_LABELS } from '../services/translator'
 
 describe('V1.4 — Translation & Information Enhancement', () => {
   // === Language Detection Tests ===

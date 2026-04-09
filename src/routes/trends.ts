@@ -184,6 +184,7 @@ router.get('/trends/analysis', async (req: Request, res: Response) => {
     search: req.query.search as string,
     days: req.query.days ? parseInt(req.query.days as string) : undefined,
     minScore: req.query.minScore ? parseInt(req.query.minScore as string) : undefined,
+    lang: (req.query.lang as string) || 'zh',
   }
   const category = filter.category || 'all'
   const filterHash = AnalysisService.buildFilterHash(filter)
@@ -205,6 +206,7 @@ router.post('/trends/analyze', async (req: Request, res: Response) => {
     search: req.body.search,
     days: req.body.days ? parseInt(req.body.days) : undefined,
     minScore: req.body.minScore ? parseInt(req.body.minScore) : undefined,
+    lang: req.body.lang || 'zh',
   }
 
   res.json({ message: 'Analysis started' })
@@ -237,6 +239,7 @@ router.post('/trends/backfill-categories', async (_req: Request, res: Response) 
 // POST /api/trends/summary - 批量生成一句话摘要（前端按需调用）
 router.post('/trends/summary', async (req: Request, res: Response) => {
   const ids: number[] = req.body.ids
+  const lang: string = req.body.lang || 'zh'
   if (!Array.isArray(ids) || ids.length === 0) {
     res.status(400).json({ error: 'ids array required' })
     return
@@ -251,17 +254,22 @@ router.post('/trends/summary', async (req: Request, res: Response) => {
     return
   }
 
-  // Return existing summaries immediately, generate missing ones
-  const existing = await prisma.trendItem.findMany({
-    where: { id: { in: limitedIds }, summary: { not: null } },
-    select: { id: true, summary: true },
-  })
-  const existingMap = new Map(existing.map(e => [e.id, e.summary]))
+  // For Chinese, return existing summaries immediately, generate missing ones
+  // For English, skip cache and generate fresh
+  const isEn = lang === 'en'
+  let existingMap = new Map<number, string>()
+  if (!isEn) {
+    const existing = await prisma.trendItem.findMany({
+      where: { id: { in: limitedIds }, summary: { not: null } },
+      select: { id: true, summary: true },
+    })
+    existingMap = new Map(existing.map(e => [e.id, e.summary!]))
+  }
 
-  const missingIds = limitedIds.filter(id => !existingMap.has(id))
+  const missingIds = isEn ? limitedIds : limitedIds.filter(id => !existingMap.has(id))
   let generatedMap = new Map<number, string>()
   if (missingIds.length > 0) {
-    generatedMap = await translator.generateSummaries(missingIds)
+    generatedMap = await translator.generateSummaries(missingIds, lang)
   }
 
   const summaries = limitedIds

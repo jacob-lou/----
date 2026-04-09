@@ -450,6 +450,7 @@
     if (state.search) params.set('search', state.search);
     params.set('days', String(state.days));
     if (state.minScore > 0) params.set('minScore', String(state.minScore));
+    params.set('lang', displayLang);
     return params;
   }
 
@@ -476,7 +477,7 @@
   }
 
   function triggerAnalysisForTab(category, state) {
-    var body = { category: category, days: state.days };
+    var body = { category: category, days: state.days, lang: displayLang };
     if (state.sources.length > 0) body.source = state.sources.join(',');
     if (state.search) body.search = state.search;
     if (state.minScore > 0) body.minScore = state.minScore;
@@ -674,7 +675,7 @@
 
       // Summary
       var summaryHtml = '';
-      if (item.summary) {
+      if (item.summary && displayLang === 'zh') {
         summaryHtml = '<div class="trend-summary">' + esc(item.summary) + '</div>';
       } else {
         summaryHtml = '<div class="trend-summary"><button class="btn-summary" data-id="' + item.id + '">' + t('generateSummary') + '</button></div>';
@@ -702,7 +703,7 @@
     fetch('/api/trends/summary', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: ids }),
+      body: JSON.stringify({ ids: ids, lang: displayLang }),
     })
     .then(function (res) { return res.json(); })
     .then(function (data) {
@@ -984,6 +985,8 @@
     if (trendsTab.classList.contains('active')) { loadTrends(); loadSources('ai'); }
     else if (generalTab.classList.contains('active')) { loadGeneralTrends(); loadSources('general'); }
     else if (keywordsTab.classList.contains('active')) { loadKeywords(); loadRecentAlerts(); }
+    // Re-trigger analysis in the new language
+    loadAnalysis();
   });
   // Restore saved lang on init
   if (displayLang !== 'zh') {

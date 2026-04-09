@@ -151,7 +151,7 @@ ${itemsList}`
         return batch.map((r) => ({ ...r, verified: true, reason: 'AI验证失败，默认通过' }))
       }
 
-      const completion = await response.json()
+      const completion: any = await response.json()
       const content = completion.choices?.[0]?.message?.content
       if (!content) {
         return batch.map((r) => ({ ...r, verified: true, reason: 'AI无响应' }))

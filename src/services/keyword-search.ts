@@ -41,7 +41,7 @@ export class KeywordSearchService {
       signal: AbortSignal.timeout(10000),
     })
     if (!res.ok) return []
-    const data = await res.json()
+    const data: any = await res.json()
     const posts = data?.data?.children || []
     return posts.map((p: any) => ({
       title: p.data.title,
@@ -57,7 +57,7 @@ export class KeywordSearchService {
     const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(keyword)}&tags=story&hitsPerPage=15`
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
     if (!res.ok) return []
-    const data = await res.json()
+    const data: any = await res.json()
     const hits = data?.hits || []
     return hits.map((h: any) => ({
       title: h.title || '',
@@ -78,7 +78,7 @@ export class KeywordSearchService {
         signal: AbortSignal.timeout(10000),
       })
       if (!res.ok) return []
-      const data = await res.json()
+      const data: any = await res.json()
       const tweets = data?.tweets || []
       return tweets.map((t: any) => ({
         title: (t.text || '').slice(0, 150),
@@ -98,7 +98,7 @@ export class KeywordSearchService {
       const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(keyword)}&format=json&no_html=1`
       const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
       if (!res.ok) return []
-      const data = await res.json()
+      const data: any = await res.json()
       const results: KeywordSearchResult[] = []
 
       if (data.Abstract) {

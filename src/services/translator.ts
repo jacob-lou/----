@@ -223,15 +223,19 @@ ${numbered}`
   /**
    * Generate one-line summaries for items (on-demand, cached in DB).
    * Returns map from item ID to summary string.
+   * When lang='en', generates English summaries without caching (DB cache is Chinese).
    */
-  async generateSummaries(itemIds: number[]): Promise<Map<number, string>> {
+  async generateSummaries(itemIds: number[], lang: string = 'zh'): Promise<Map<number, string>> {
     const result = new Map<number, string>()
     if (!this.apiKey || itemIds.length === 0) return result
 
-    // Fetch items that don't have summaries yet
+    const isEn = lang === 'en'
+
+    // For Chinese: fetch items that don't have summaries yet (use cache)
+    // For English: fetch all requested items (generate fresh)
     const items = await prisma.trendItem.findMany({
-      where: { id: { in: itemIds }, summary: null },
-      select: { id: true, title: true, titleZh: true, source: true, extra: true },
+      where: isEn ? { id: { in: itemIds } } : { id: { in: itemIds }, summary: null },
+      select: { id: true, title: true, titleZh: true, titleEn: true, source: true, extra: true },
     })
 
     if (items.length === 0) return result
@@ -245,11 +249,19 @@ ${numbered}`
           if (parsed.description) extraInfo = ` — ${parsed.description.slice(0, 100)}`
           else if (parsed.snippet) extraInfo = ` — ${parsed.snippet.slice(0, 100)}`
         } catch { /* ignore */ }
-        const title = item.titleZh || item.title
+        const title = isEn ? (item.titleEn || item.title) : (item.titleZh || item.title)
         return `${idx + 1}. [${item.source}] ${title}${extraInfo}`
       }).join('\n')
 
-      const prompt = `为以下每条热点生成一句中文摘要（每条不超过30个字），帮助读者快速判断这条信息的价值和核心内容。
+      const prompt = isEn
+        ? `Generate a one-line English summary for each trending item below (max 15 words each), helping readers quickly assess the value and core content.
+
+Return ONLY a JSON array of strings, each element being the summary of the corresponding item. Format: ["summary1", "summary2", ...]
+Return only the JSON array, no other content.
+
+Trending items:
+${numbered}`
+        : `为以下每条热点生成一句中文摘要（每条不超过30个字），帮助读者快速判断这条信息的价值和核心内容。
 
 返回一个 JSON 字符串数组，每个元素对应一条摘要。格式: ["摘要1", "摘要2", ...]
 只返回 JSON 数组，不要其他内容。
@@ -287,15 +299,18 @@ ${numbered}`
         for (let j = 0; j < batch.length; j++) {
           const summary = summaries[j]
           if (summary && typeof summary === 'string') {
-            await prisma.trendItem.update({
-              where: { id: batch[j].id },
-              data: { summary },
-            })
+            // Only cache Chinese summaries in DB
+            if (!isEn) {
+              await prisma.trendItem.update({
+                where: { id: batch[j].id },
+                data: { summary },
+              })
+            }
             result.set(batch[j].id, summary)
           }
         }
 
-        console.log(`[Translator] Generated ${batch.length} summaries`)
+        console.log(`[Translator] Generated ${batch.length} summaries (${lang})`)
       } catch (err: any) {
         console.error(`[Translator] Summary generation failed:`, err?.message || err)
       }
