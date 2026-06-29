@@ -2,14 +2,16 @@ import { TrendSource, TrendData } from './base'
 
 interface TwitterTrend {
   name: string
+  query?: string
   target?: { query: string }
-  rank: number
+  rank?: number
+  description?: string
   meta_description?: string
 }
 
 interface TwitterTrendsResponse {
   trends: TwitterTrend[]
-  status: string
+  status?: string
   msg?: string
 }
 
@@ -24,7 +26,7 @@ interface TwitterTweet {
   viewCount: number
   isReply?: boolean
   isQuote?: boolean
-  author: {
+  author?: {
     name: string
     userName: string
     isVerified?: boolean
@@ -36,6 +38,13 @@ interface TwitterSearchResponse {
   tweets: TwitterTweet[]
   has_next_page: boolean
   next_cursor: string
+}
+
+type TwitterProvider = 'twitterapi.io' | 'xquik'
+
+interface TwitterSourceOptions {
+  provider?: TwitterProvider
+  xquikBaseUrl?: string
 }
 
 // 推文质量过滤阈值
@@ -54,9 +63,13 @@ const AI_TECH_QUERIES = [
 export class TwitterSource implements TrendSource {
   name = 'twitter'
   private apiKey: string
+  private provider: TwitterProvider
+  private xquikBaseUrl: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, options: TwitterSourceOptions = {}) {
     this.apiKey = apiKey
+    this.provider = options.provider || 'twitterapi.io'
+    this.xquikBaseUrl = (options.xquikBaseUrl || 'https://xquik.com/api/v1').replace(/\/$/, '')
   }
 
   async fetch(): Promise<TrendData[]> {
@@ -75,8 +88,8 @@ export class TwitterSource implements TrendSource {
           extra: JSON.stringify({
             type: 'trend',
             rank: trend.rank,
-            description: trend.meta_description,
-            query: trend.target?.query,
+            description: trend.description || trend.meta_description,
+            query: trend.query || trend.target?.query,
           }),
         })
       }
@@ -144,6 +157,10 @@ export class TwitterSource implements TrendSource {
   }
 
   private async fetchTrends(): Promise<TwitterTrend[]> {
+    if (this.provider === 'xquik') {
+      return this.fetchXquikTrends()
+    }
+
     const response = await fetch('https://api.twitterapi.io/twitter/trends?woeid=1&count=30', {
       headers: {
         'x-api-key': this.apiKey,
@@ -163,6 +180,10 @@ export class TwitterSource implements TrendSource {
   }
 
   private async searchTweets(query: string): Promise<TwitterTweet[]> {
+    if (this.provider === 'xquik') {
+      return this.searchXquikTweets(query)
+    }
+
     const response = await fetch(
       `https://api.twitterapi.io/twitter/tweet/advanced_search?query=${encodeURIComponent(query)}&queryType=Top&count=20`,
       {
@@ -178,5 +199,49 @@ export class TwitterSource implements TrendSource {
 
     const data = await response.json() as TwitterSearchResponse
     return data.tweets || []
+  }
+
+  private async fetchXquikTrends(): Promise<TwitterTrend[]> {
+    const response = await fetch(`${this.xquikBaseUrl}/trends?woeid=1&count=30`, {
+      headers: {
+        'X-API-Key': this.apiKey,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Xquik trends API failed: ${response.status}`)
+    }
+
+    const data = await response.json() as TwitterTrendsResponse
+    return data.trends || []
+  }
+
+  private async searchXquikTweets(query: string): Promise<TwitterTweet[]> {
+    const searchParams = new URLSearchParams({
+      q: query,
+      queryType: 'Top',
+      limit: '20',
+    })
+    const response = await fetch(`${this.xquikBaseUrl}/x/tweets/search?${searchParams.toString()}`, {
+      headers: {
+        'X-API-Key': this.apiKey,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Xquik search API failed: ${response.status}`)
+    }
+
+    const data = await response.json() as TwitterSearchResponse
+    return (data.tweets || []).map((tweet) => ({
+      ...tweet,
+      isQuote: tweet.isQuote || Boolean((tweet as { isQuoteStatus?: boolean }).isQuoteStatus),
+      author: tweet.author ? {
+        name: tweet.author.name,
+        userName: tweet.author.userName || (tweet.author as { username?: string }).username || '',
+        isVerified: tweet.author.isVerified || (tweet.author as { verified?: boolean }).verified,
+        followers: tweet.author.followers,
+      } : undefined,
+    }))
   }
 }

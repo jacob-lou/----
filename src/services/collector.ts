@@ -29,9 +29,21 @@ export class CollectorService {
     this.sources.push(new BingNewsSource())
     this.sources.push(new BilibiliSource())
 
+    const twitterProvider = process.env.TWITTER_PROVIDER === 'xquik' ? 'xquik' : 'twitterapi.io'
     const twitterApiKey = process.env.TWITTER_API_KEY
-    if (twitterApiKey && twitterApiKey !== 'your_twitterapi_io_key_here') {
-      this.sources.push(new TwitterSource(twitterApiKey))
+    const xquikApiKey = process.env.XQUIK_API_KEY
+    const selectedTwitterApiKey = twitterProvider === 'xquik'
+      ? xquikApiKey
+      : (twitterApiKey || xquikApiKey)
+
+    if (selectedTwitterApiKey && selectedTwitterApiKey !== 'your_twitterapi_io_key_here') {
+      const provider = twitterProvider === 'twitterapi.io' && !twitterApiKey && xquikApiKey
+        ? 'xquik'
+        : twitterProvider
+      this.sources.push(new TwitterSource(selectedTwitterApiKey, {
+        provider,
+        xquikBaseUrl: process.env.XQUIK_API_BASE_URL,
+      }))
     } else {
       console.warn('[Collector] Twitter API key not configured, skipping Twitter source')
     }
